@@ -25,7 +25,6 @@ body {
     min-height: 100vh;
 }
 
-/* ── Subtle diagonal stripe overlay (Marvel Rivals aesthetic) ── */
 .scanlines { display: none; }
 
 .grid-overlay {
@@ -46,7 +45,6 @@ body {
     z-index: 100;
 }
 
-/* ── SIDEBAR ── */
 .sidebar {
     width: 280px;
     border-right: 2px solid var(--border);
@@ -58,7 +56,6 @@ body {
     overflow: hidden;
 }
 
-/* Yellow diagonal slash behind sidebar logo */
 .sidebar::before {
     content: '';
     position: absolute;
@@ -130,7 +127,6 @@ body {
     text-shadow: 0 0 10px rgba(245,196,0,0.5);
 }
 
-/* ── DASHBOARD ── */
 .dashboard {
     flex: 1;
     display: flex;
@@ -190,7 +186,6 @@ body {
 #search-box::placeholder { color: var(--text-dim); }
 #filter-box { cursor: pointer; min-width: 150px; }
 
-/* Option styling for dark dropdowns */
 #filter-box option {
     background: var(--panel-bg);
     color: var(--text-main);
