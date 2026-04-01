@@ -33,7 +33,7 @@ async function f(c) {
         })
         let d = await r.json()
 
-        // Different endpoints return data differently
+        
         if (c === "maps") {
             curData = d.maps || []
         } else if (c === "heroes") {
@@ -44,7 +44,7 @@ async function f(c) {
             curData = d.data || d || []
         }
 
-        // Build filter options
+        
         let fs = ["ALL"]
         for (let i = 0; i < curData.length; i++) {
             let item = curData[i]
@@ -91,7 +91,7 @@ async function f(c) {
 
 function getImg(item) {
     if (curCat === "maps") {
-        // Prefer large or medium image, fallback to first
+        
         let imgs = item.images || []
         let large = imgs.find(i => i.includes("/large/") || i.includes("/xl/"))
         let medium = imgs.find(i => i.includes("/medium/"))
@@ -222,7 +222,7 @@ grid.addEventListener("click", function(e) {
         h += "<p style='color:var(--text-dim); margin-bottom:15px; line-height: 1.5; font-size: 0.95rem;'>" + item.description + "</p>"
     }
 
-    // Maps detail
+    
     if (curCat === "maps") {
         h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;'>"
         h += "<div class='detail-section' style='border:none; margin:0; padding:0;'><h3 style='color:var(--pure-white); margin-bottom:10px; font-family:var(--font-head);'>MAP INFO</h3>"
@@ -237,7 +237,7 @@ grid.addEventListener("click", function(e) {
             h += "<a href='" + item.video + "' target='_blank' style='display:inline-block; padding:10px 22px; background:var(--neon-pink); color:#000; font-family:var(--font-head); font-size:0.9rem; text-decoration:none; letter-spacing:2px; border-radius:2px;'>▶ WATCH VIDEO</a>"
         }
 
-        // Show all map images as a gallery strip
+        
         if (item.images && item.images.length > 1) {
             h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;'>"
             h += "<h3 style='color:var(--pure-white); margin-bottom:10px; font-family:var(--font-head); font-size:1rem;'>MAP VIEWS</h3>"
@@ -251,7 +251,7 @@ grid.addEventListener("click", function(e) {
         }
     }
 
-    // Heroes detail
+    
     if (curCat === "heroes") {
         if (item.role) {
             h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;'>"
