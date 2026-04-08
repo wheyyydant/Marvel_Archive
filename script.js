@@ -1,327 +1,164 @@
-let nav = document.getElementById("nav")
-let btns = nav.getElementsByTagName("button")
-let grid = document.getElementById("grid")
-let title = document.getElementById("cat-title")
-let scan = document.querySelector(".scanning-anim")
-let sBox = document.getElementById("search-box")
-let fBox = document.getElementById("filter-box")
-let modOver = document.getElementById("modal-overlay")
-let modBody = document.getElementById("modal-body")
-let modClose = document.getElementById("modal-close")
+let nav = document.getElementById("nav");
+let btns = nav.getElementsByTagName("button");
+let grid = document.getElementById("grid");
+let title = document.getElementById("cat-title");
+let scan = document.querySelector(".scanning-anim");
 
-const API_KEY = "9a0843aa13a17e56841b821d4b659b169c4ea3944bfb4c6e0fed0c27e939ccef"
-const BASE_URL = "https://marvelrivalsapi.com/api/v1"
-const IMG_BASE = "https://marvelrivalsapi.com"
+const API_KEY = "9a0843aa13a17e56841b821d4b659b169c4ea3944bfb4c6e0fed0c27e939ccef";
+const BASE_URL = "https://marvelrivalsapi.com/api/v1";
+const IMG_BASE = "https://marvelrivalsapi.com";
 
-let curData = []
-let curCat = ""
+let curData = [];
+let curCat = "";
 
 async function init() {
-    f("maps")
+    let urlParams = new URLSearchParams(window.location.search);
+    let initialCat = urlParams.get('cat') || "maps";
+    
+    // Set initial active button
+    Array.from(btns).forEach(b => {
+        b.classList.remove("active");
+        if (b.getAttribute("data-cat") === initialCat) {
+            b.classList.add("active");
+            title.innerText = b.innerText;
+        }
+    });
+
+    loadCategory(initialCat, false);
 }
 
-async function f(c) {
-    curCat = c
-    grid.innerHTML = ""
-    scan.style.display = "block"
+// Handle Browser Back Button for categories
+window.addEventListener("popstate", (e) => {
+    let cat = e.state && e.state.cat ? e.state.cat : "maps";
+    
+    // Update active UI
+    Array.from(btns).forEach(b => {
+        b.classList.remove("active");
+        if (b.getAttribute("data-cat") === cat) {
+            b.classList.add("active");
+            title.innerText = b.innerText;
+        }
+    });
 
-    let endpoint = BASE_URL + "/" + c
+    loadCategory(cat, false);
+});
+
+async function loadCategory(cat, pushState = true) {
+    if (pushState) {
+        window.history.pushState({ cat: cat }, "", `?cat=${cat}`);
+    }
+
+    curCat = cat;
+    grid.innerHTML = "";
+    scan.style.display = "block";
 
     try {
-        let r = await fetch(endpoint, {
+        let r = await fetch(`${BASE_URL}/${cat}`, {
             headers: { "x-api-key": API_KEY }
-        })
-        let d = await r.json()
+        });
+        let d = await r.json();
 
-        
-        if (c === "maps") {
-            curData = d.maps || []
-        } else if (c === "heroes") {
-            curData = d.heroes || d.data || d || []
-        } else if (c === "gamemodes") {
-            curData = d.gamemodes || d.data || d || []
-        } else {
-            curData = d.data || d || []
-        }
+        if (cat === "maps") curData = d.maps || [];
+        else if (cat === "heroes") curData = d.heroes || d.data || d || [];
+        else if (cat === "achievements") curData = d.achievements || d.data || d || [];
+        else if (cat === "items") curData = d.items || d.data || d || [];
+        else if (cat === "battlepass") curData = d.items || d.data || d || [];
+        else curData = d.data || d || [];
 
-        
-        let fs = ["ALL"]
-        for (let i = 0; i < curData.length; i++) {
-            let item = curData[i]
-            if (c === "maps" && item.game_mode) {
-                let gm = item.game_mode.toUpperCase()
-                let ok = false
-                for (let j = 0; j < fs.length; j++) {
-                    if (fs[j] === gm) ok = true
-                }
-                if (!ok) fs[fs.length] = gm
-            }
-            if (c === "heroes" && item.role) {
-                let rn = (item.role || "").toUpperCase()
-                let ok = false
-                for (let j = 0; j < fs.length; j++) {
-                    if (fs[j] === rn) ok = true
-                }
-                if (!ok) fs[fs.length] = rn
-            }
-        }
-
-        let fh = ""
-        for (let i = 0; i < fs.length; i++) {
-            fh += "<option value='" + fs[i] + "'>" + fs[i] + "</option>"
-        }
-        fBox.innerHTML = fh
-        fBox.value = "ALL"
-
-        if (fs.length > 1) {
-            fBox.style.display = "inline-block"
-        } else {
-            fBox.style.display = "none"
-        }
-
-        sBox.value = ""
-        render()
-        scan.style.display = "none"
-
+        render();
     } catch (e) {
-        grid.innerHTML = "<p>ERR: CONNECTION FAILED</p>"
-        scan.style.display = "none"
+        grid.textContent = "ERR: CONNECTION FAILED";
+    } finally {
+        scan.style.display = "none";
     }
 }
 
 function getImg(item) {
+    let img = "";
     if (curCat === "maps") {
-        
-        let imgs = item.images || []
-        let large = imgs.find(i => i.includes("/large/") || i.includes("/xl/"))
-        let medium = imgs.find(i => i.includes("/medium/"))
-        let chosen = large || medium || imgs[0] || ""
-        if (chosen && chosen.startsWith("/")) return IMG_BASE + chosen
-        return chosen
+        let imgs = item.images || [];
+        img = imgs.find(i => i.includes("/large/") || i.includes("/xl/")) || imgs.find(i => i.includes("/medium/")) || imgs[0];
+    } else if (curCat === "heroes") {
+        img = item.imageUrl || item.thumbnail || item.portrait || item.icon;
+    } else {
+        img = item.imageUrl || item.thumbnail || item.icon || item.image;
     }
-    if (curCat === "heroes") {
-        let img = item.thumbnail || item.portrait || item.icon || ""
-        if (img && img.startsWith("/")) return IMG_BASE + img
-        return img
+    
+    if (!img) return "";
+    
+    // Fix missing /rivals prefix from some API endpoints (like achievements or items)
+    if (img.startsWith("/") && !img.startsWith("/rivals/")) {
+        img = "/rivals" + img;
     }
-    let img = item.thumbnail || item.icon || item.image || ""
-    if (img && img.startsWith("/")) return IMG_BASE + img
-    return img
+    
+    return img.startsWith("/") ? IMG_BASE + img : img;
 }
 
 function render() {
-    let q = sBox.value.toLowerCase()
-    let fv = fBox.value
-    let h = ""
+    grid.innerHTML = "";
 
-    for (let i = 0; i < curData.length; i++) {
-        let item = curData[i]
+    curData.forEach((item, index) => {
+        let name = item.name || item.full_name || item.displayName || "UNNAMED";
 
-        if (curCat === "maps" && fv !== "ALL") {
-            if (!item.game_mode || item.game_mode.toUpperCase() !== fv) continue
-        }
-        if (curCat === "heroes" && fv !== "ALL") {
-            if (!item.role || item.role.toUpperCase() !== fv) continue
-        }
+        let imgUrl = getImg(item);
+        if (!imgUrl) return;
 
-        let n = item.name || item.full_name || item.displayName || "UNNAMED"
-        if (q !== "") {
-            if (n.toLowerCase().indexOf(q) === -1) continue
-        }
+        let card = document.createElement("div");
+        card.className = "card";
+        card.dataset.idx = index;
 
-        let desc = item.description || ""
-        let img = getImg(item)
+        let img = document.createElement("img");
+        img.className = "card-img";
+        img.src = imgUrl;
 
-        if (!img) continue
+        let h3 = document.createElement("h3");
+        h3.className = "card-title";
+        h3.textContent = name;
 
-        let tags = ""
-        if (curCat === "maps") {
-            if (item.game_mode) tags += "<span>MODE: " + item.game_mode.toUpperCase() + "</span>"
-            if (item.location) tags += "<span>LOC: " + item.location.toUpperCase() + "</span>"
-            if (typeof item.is_competitive !== "undefined") {
-                tags += "<span>" + (item.is_competitive ? "COMPETITIVE" : "CASUAL") + "</span>"
-            }
-        }
-        if (curCat === "heroes") {
-            if (item.role) tags += "<span>ROLE: " + item.role.toUpperCase() + "</span>"
-            if (item.difficulty) tags += "<span>DIFF: " + item.difficulty + "</span>"
-        }
-
-        let wordsList = ["MARVEL", "RIVALS", "ASSEMBLE", "ONLINE", "SYS.0X", "PROTOCOL"]
-        let w1 = wordsList[Math.floor(Math.random() * wordsList.length)]
-        let w2 = wordsList[Math.floor(Math.random() * wordsList.length)]
-        let edgePos = [
-            {t:"8%", l:"8%"}, {t:"12%", l:"85%"}, {t:"50%", l:"5%"}, {t:"30%", l:"85%"}, {t:"80%", l:"80%"}
-        ]
-        let dec = ""
-        let numSq = Math.floor(Math.random() * 3) + 2
-        for (let s = 0; s < numSq; s++) {
-            if (edgePos.length === 0) break
-            let p = edgePos.splice(Math.floor(Math.random() * edgePos.length), 1)[0]
-            let size = Math.floor(Math.random() * 6) + 4
-            dec += "<div class='sq' style='top:" + p.t + "; left:" + p.l + "; width:" + size + "px; height:" + size + "px;'></div>"
-        }
-
-        let html = "<div class='card' data-idx='" + i + "'>" +
-            "<div class='card-decor'>" +
-                dec +
-                "<div class='txt txt-1'>" + w1 + "</div><div class='txt txt-2'>" + w2 + "</div>" +
-                "<div class='dots' style='top:8%; right:8%;'>::</div><div class='dots' style='top:40%; left:5%; transform:rotate(90deg);'>::</div>" +
-            "</div>" +
-            "<img class='card-img' src='" + img + "' alt='img' loading='lazy'>" +
-            "<h3 class='card-title'>" + n + "</h3>" +
-            "<div class='card-hud'>" +
-                tags +
-            "</div>" +
-            "<p class='card-desc'>" + desc + "</p>" +
-            "<div class='progress-bar'><div class='progress-fill' style='width:" + (Math.random() * 60 + 20) + "%'></div></div>" +
-        "</div>"
-
-        h += html
-    }
-
-    grid.innerHTML = h
-}
-
-sBox.addEventListener("input", render)
-fBox.addEventListener("change", render)
-
-for (let i = 0; i < btns.length; i++) {
-    btns[i].addEventListener("click", function(e) {
-        let t = e.target
-        if (t.tagName !== "BUTTON") return
-        for (let j = 0; j < btns.length; j++) {
-            btns[j].classList.remove("active")
-        }
-        t.classList.add("active")
-
-        let c = t.getAttribute("data-cat")
-        title.innerText = t.innerText
-        f(c)
-    })
-}
-
-grid.addEventListener("click", function(e) {
-    let el = e.target.closest(".card")
-    if (!el) return
-    let idx = el.getAttribute("data-idx")
-    let item = curData[idx]
-
-    let n = item.name || item.full_name || item.displayName || "UNNAMED"
-    let img = getImg(item)
-
-    let h = "<div class='detail-grid'>"
-    h += "<div><img src='" + img + "' style='width:100%; object-fit:contain; filter:drop-shadow(0 10px 15px rgba(0,0,0,0.5));' loading='lazy'></div>"
-    h += "<div><h2 style='color:var(--neon-pink); font-family:var(--font-head); font-size:2.8rem; margin-bottom:15px; line-height: 1;'>" + n.toUpperCase() + "</h2>"
-
-    if (item.full_name && item.full_name !== n) {
-        h += "<p style='color:var(--text-dim); font-size:0.85rem; margin-bottom:10px; letter-spacing:1px;'>" + item.full_name + "</p>"
-    }
-
-    if (item.description) {
-        h += "<p style='color:var(--text-dim); margin-bottom:15px; line-height: 1.5; font-size: 0.95rem;'>" + item.description + "</p>"
-    }
-
-    
-    if (curCat === "maps") {
-        h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;'>"
-        h += "<div class='detail-section' style='border:none; margin:0; padding:0;'><h3 style='color:var(--pure-white); margin-bottom:10px; font-family:var(--font-head);'>MAP INFO</h3>"
-        if (item.game_mode) h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>GAME MODE:</strong> <span style='color:var(--pure-white);'>" + item.game_mode + "</span></p>"
-        if (item.location) h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>LOCATION:</strong> <span style='color:var(--pure-white);'>" + item.location + "</span></p>"
-        if (typeof item.is_competitive !== "undefined") h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>COMPETITIVE:</strong> <span style='color:var(--pure-white);'>" + (item.is_competitive ? "YES" : "NO") + "</span></p>"
-        if (item.sub_map_name) h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>SUB MAP:</strong> <span style='color:var(--pure-white);'>" + item.sub_map_name + "</span></p>"
-        h += "</div>"
-
-        if (item.video) {
-            h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;'>"
-            h += "<a href='" + item.video + "' target='_blank' style='display:inline-block; padding:10px 22px; background:var(--neon-pink); color:#000; font-family:var(--font-head); font-size:0.9rem; text-decoration:none; letter-spacing:2px; border-radius:2px;'>▶ WATCH VIDEO</a>"
-        }
-
+        let p = document.createElement("p");
+        p.className = "card-desc";
         
-        if (item.images && item.images.length > 1) {
-            h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;'>"
-            h += "<h3 style='color:var(--pure-white); margin-bottom:10px; font-family:var(--font-head); font-size:1rem;'>MAP VIEWS</h3>"
-            h += "<div style='display:flex; gap:8px; flex-wrap:wrap;'>"
-            for (let j = 0; j < item.images.length; j++) {
-                let mi = item.images[j]
-                if (mi.startsWith("/")) mi = IMG_BASE + mi
-                h += "<img src='" + mi + "' style='width:calc(50% - 4px); border-radius:4px; object-fit:cover; cursor:pointer;' loading='lazy' onclick=\"document.querySelector('.detail-grid img').src=this.src\">"
-            }
-            h += "</div>"
-        }
-    }
+        let descText = (item.description && item.description !== "0") ? item.description : (item.bio || item.mission || item.type || item.cost || "No description available.");
+        p.textContent = descText;
 
-    
-    if (curCat === "heroes") {
-        if (item.role) {
-            h += "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;'>"
-            h += "<p style='margin-bottom: 5px;'><strong style='color:var(--neon-pink); font-size: 1.1rem;'>ROLE: </strong> <span style='color:var(--pure-white); font-size: 1.1rem;'>" + item.role + "</span></p>"
-        }
-        if (item.difficulty) {
-            h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>DIFFICULTY:</strong> <span style='color:var(--pure-white);'>" + item.difficulty + "</span></p>"
-        }
-        if (item.real_name) {
-            h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>REAL NAME:</strong> <span style='color:var(--pure-white);'>" + item.real_name + "</span></p>"
-        }
-        if (item.team) {
-            h += "<p style='color:var(--text-dim); margin-bottom:5px;'><strong style='color:var(--neon-pink);'>TEAM:</strong> <span style='color:var(--pure-white);'>" + item.team + "</span></p>"
-        }
-    }
-
-    h += "</div></div>"
-    modBody.innerHTML = h
-    modOver.classList.add("active")
-})
-
-modClose.addEventListener("click", function() {
-    modOver.classList.remove("active")
-})
-
-let auCtx;
-function playSfx(type) {
-    if (!auCtx) {
-        let AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        auCtx = new AudioContext();
-    }
-    if (auCtx.state === 'suspended') auCtx.resume();
-    let osc = auCtx.createOscillator();
-    let gain = auCtx.createGain();
-    osc.connect(gain);
-    gain.connect(auCtx.destination);
-
-    let now = auCtx.currentTime;
-    if (type === 'hover') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
-        gain.gain.setValueAtTime(0.02, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-        osc.start(now);
-        osc.stop(now + 0.05);
-    } else if (type === 'click') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        osc.start(now);
-        osc.stop(now + 0.1);
-    }
+        card.appendChild(img);
+        card.appendChild(h3);
+        card.appendChild(p);
+        grid.appendChild(card);
+    });
 }
 
-document.addEventListener('mouseover', function(e) {
-    let t = e.target.closest('.card, button, #search-box, #filter-box, .modal-close');
-    if (!t) return;
-    let r = e.relatedTarget;
-    if (r && t.contains(r)) return;
-    playSfx('hover');
+Array.from(btns).forEach(btn => {
+    btn.addEventListener("click", e => {
+        let cat = e.target.getAttribute("data-cat");
+        if (cat === curCat) return;
+
+        Array.from(btns).forEach(b => b.classList.remove("active"));
+        e.target.classList.add("active");
+        title.innerText = e.target.innerText;
+
+        loadCategory(cat, true);
+    });
 });
 
-document.addEventListener('mousedown', function(e) {
-    let t = e.target.closest('.card, button, #search-box, #filter-box, .modal-close');
-    if (!t) return;
-    playSfx('click');
+grid.addEventListener("click", e => {
+    let card = e.target.closest(".card");
+    if (!card) return;
+    
+    let item = curData[card.dataset.idx];
+    let name = encodeURIComponent(item.name || item.full_name || item.displayName || "UNNAMED");
+    let imgUrl = encodeURIComponent(getImg(item));
+    let descText = (item.description && item.description !== "0") ? item.description : (item.bio || item.mission || item.type || item.cost || "No description available.");
+    let desc = encodeURIComponent(descText);
+
+    // Pick the correct HTML file based on the category
+    let targetFile = curCat === "heroes" ? "hero.html" 
+                   : (curCat === "maps" ? "map.html" 
+                   : (curCat === "items" ? "item.html" 
+                   : (curCat === "battlepass" ? "battlepass.html" : "achievement.html")));
+    
+    // Open the new tab with URL parameters containing the data
+    window.open(`${targetFile}?name=${name}&imgUrl=${imgUrl}&desc=${desc}`, "_blank");
 });
 
-init()
+init();
