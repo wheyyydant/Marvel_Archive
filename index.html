@@ -14,13 +14,6 @@
     <div class="scanlines"></div>
     <div class="grid-overlay"></div>
     
-    <div id="modal-overlay" class="modal-overlay">
-        <div class="modal-content">
-            <button id="modal-close" class="modal-close">&times;</button>
-            <div id="modal-body" class="modal-body"></div>
-        </div>
-    </div>
-
     <div class="app">
         <aside class="sidebar">
             <div class="logo">
@@ -29,6 +22,9 @@
             <nav id="nav">
                 <button data-cat="maps" class="active">MAPS</button>
                 <button data-cat="heroes">HEROES</button>
+                <button data-cat="achievements">ACHIEVEMENTS</button>
+                <button data-cat="items">ITEMS</button>
+                <button data-cat="battlepass">BATTLEPASS</button>
             </nav>
             <div class="sys-status">
                 <span>STATUS: <span class="glow-text">ONLINE</span></span>
@@ -39,12 +35,6 @@
             <header class="dash-header">
                 <div class="header-left">
                     <h2 id="cat-title">MAPS</h2>
-                    <div class="dash-controls">
-                        <input type="text" id="search-box" placeholder="SEARCH...">
-                        <select id="filter-box">
-                            <option value="ALL">ALL</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="scanning-anim">SCANNING...</div>
             </header>
