@@ -12,9 +12,21 @@
     --pure-white: #FFFFFF;
     --border: rgba(245, 196, 0, 0.15);
     --dark-border: rgba(255,255,255,0.06);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+body.light-mode {
+    --bg-color: #f8f9fc;
+    --panel-bg: #ffffff;
+    --sidebar-bg: #eef1f7;
+    --text-main: #1a1d24;
+    --text-dim: #5a5e6a;
+    --pure-white: #111318;
+    --border: rgba(0, 0, 0, 0.08);
+    --dark-border: rgba(0, 0, 0, 0.04);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; transition: background-color var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition); }
 html { scroll-behavior: smooth; }
 
 body {
@@ -162,6 +174,26 @@ body {
 .dash-controls {
     display: flex;
     gap: 10px;
+    align-items: center;
+}
+
+#theme-toggle {
+    background: var(--accent);
+    color: #111318;
+    border: none;
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+#theme-toggle:hover {
+    box-shadow: 0 0 15px var(--accent-glow);
+    transform: translateY(-1px);
 }
 
 #search-box, #filter-box {
@@ -191,14 +223,12 @@ body {
     color: var(--text-main);
 }
 
-/* Display layout and grid setup */
 #grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
 }
 
-/* Base Card Style */
 .card {
     border: 1px solid var(--border);
     padding: 15px;
@@ -230,7 +260,6 @@ body {
     overflow: hidden;
 }
 
-/* Modal Inner Display */
 #modal-body h2 {
     margin-bottom: 15px;
 }
@@ -248,7 +277,6 @@ body {
     line-height: 1.5;
 }
 
-/* Modal Core Styles */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
