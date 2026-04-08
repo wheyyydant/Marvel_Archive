@@ -5,6 +5,7 @@ let title = document.getElementById("cat-title");
 let scan = document.querySelector(".scanning-anim");
 let searchBox = document.getElementById("search-box");
 let filterBox = document.getElementById("filter-box");
+let themeBtn = document.getElementById("theme-toggle");
 
 const API_KEY = "9a0843aa13a17e56841b821d4b659b169c4ea3944bfb4c6e0fed0c27e939ccef";
 const BASE_URL = "https://marvelrivalsapi.com/api/v1";
@@ -17,6 +18,11 @@ async function init() {
     let urlParams = new URLSearchParams(window.location.search);
     let initialCat = urlParams.get('cat') || "maps";
     
+    if (localStorage.getItem("theme") === "light") {
+        document.body.classList.add("light-mode");
+        themeBtn.innerText = "MODE: LIGHT";
+    }
+
     Array.from(btns).map(b => {
         b.classList.remove("active");
         if (b.getAttribute("data-cat") === initialCat) {
@@ -27,6 +33,12 @@ async function init() {
 
     loadCategory(initialCat, false);
 }
+
+themeBtn.addEventListener("click", () => {
+    let isLight = document.body.classList.toggle("light-mode");
+    themeBtn.innerText = isLight ? "MODE: LIGHT" : "MODE: DARK";
+    localStorage.setItem("theme", isLight ? "light" : "dark");
+});
 
 window.addEventListener("popstate", (e) => {
     let cat = e.state && e.state.cat ? e.state.cat : "maps";
@@ -166,9 +178,9 @@ grid.addEventListener("click", e => {
     let desc = encodeURIComponent(descText);
 
     let targetFile = curCat === "heroes" ? "hero.html" 
-                   : (curCat === "maps" ? "map.html" 
-                   : (curCat === "items" ? "item.html" 
-                   : (curCat === "battlepass" ? "battlepass.html" : "achievement.html")));
+                    : (curCat === "maps" ? "map.html" 
+                    : (curCat === "items" ? "item.html" 
+                    : (curCat === "battlepass" ? "battlepass.html" : "achievement.html")));
     
     window.open(`${targetFile}?name=${name}&imgUrl=${imgUrl}&desc=${desc}`, "_blank");
 });
