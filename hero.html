@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hero Info</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="hero.css">
+</head>
+<body>
+    <div class="grid-overlay"></div>
+    <div class="info-container">
+        <h1 id="info-title">Loading...</h1>
+        <img id="info-img" src="https://static.wikia.nocookie.net/marvel-rivals/images/3/3e/Marvel_Rivals_roster_2026.jpg/revision/latest/scale-to-width-down/340?cb=20260101051242" alt="Hero Image">
+        <p id="info-desc">Loading hero details...</p>
+        <button class="home-btn" onclick="window.close()">GO HOME</button>
+    </div>
+    
+    <script>
+        // Extract data passed via the URL
+        const params = new URLSearchParams(window.location.search);
+        const name = params.get('name') || "Unknown Hero";
+        
+        document.title = name;
+        document.getElementById('info-title').textContent = name;
+        document.getElementById('info-img').src = params.get('imgUrl') || "";
+        document.getElementById('info-img').alt = name;
+        document.getElementById('info-desc').textContent = params.get('desc') || "No description available.";
+    </script>
+</body>
+</html>
